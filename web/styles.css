@@ -1,0 +1,181 @@
+:root {
+  --bg: #0d0f12;
+  --panel: #16191e;
+  --line: #262b33;
+  --text: #e6e9ef;
+  --dim: #8b93a1;
+  --accent: #ff7a45;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 13px/1.5 ui-sans-serif, -apple-system, system-ui, sans-serif;
+  display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+  overflow: hidden;
+}
+header {
+  display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+  padding: 10px 12px; background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+header h1 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: .02em; }
+header h1 span { color: var(--dim); font-weight: 400; }
+.grow { flex: 1; }
+label { color: var(--dim); display: inline-flex; align-items: center; gap: 5px; }
+/* `display` on the rule above outranks the UA stylesheet's [hidden] rule,
+   so the hidden attribute needs restating here to have any effect. */
+[hidden] { display: none !important; }
+select, button {
+  background: #1e232b; color: var(--text); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer;
+}
+button:hover, select:hover { border-color: #3a4250; }
+button.on { background: var(--accent); border-color: var(--accent); color: #14161a; font-weight: 600; }
+input[type=range] { width: 90px; accent-color: var(--accent); vertical-align: middle; }
+#logo { display: block; border-radius: 5px; flex: none; }
+.icon { padding: 5px 7px; line-height: 0; }
+.icon svg { display: block; width: 16px; height: 16px; }
+
+/* Grid rather than nested flex so each breakpoint can place the three regions
+   independently — in particular, moving the log below the controls on a phone
+   while keeping it under the image on a desktop. */
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 234px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "stage aside"
+    "log   aside";
+  min-height: 0;
+}
+#stage {
+  grid-area: stage;
+  position: relative; display: grid; place-items: center;
+  padding: 14px; min-width: 0; min-height: 0;
+}
+/* The frame lives on the wrapper, not on the canvases. That keeps each
+   canvas's box identical to its drawing surface, so overlay coordinates
+   and mouse coordinates line up exactly with image pixels. */
+#wrap {
+  position: relative; line-height: 0;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: #000; overflow: hidden;
+}
+canvas {
+  display: block; image-rendering: pixelated; cursor: crosshair;
+  /* No max-width/max-height here: those clamp each axis independently and so
+     break the aspect ratio. fitStage() already sizes the canvas to fit. */
+  touch-action: none;          /* dragging on the image must not scroll the page */
+}
+#overlay { position: absolute; inset: 0; pointer-events: none; }
+
+aside {
+  grid-area: aside; background: var(--panel);
+  border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; min-height: 0;
+}
+#asideBody {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 12px 14px; overflow-y: auto; min-height: 0;
+}
+.readout { display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.row .k { color: var(--dim); }
+.row .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.big { font-size: 27px; font-variant-numeric: tabular-nums; font-weight: 650; letter-spacing: -.02em; }
+.hot { color: #ff6b57; } .cold { color: #5aa9ff; }
+h2 {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--dim); margin: 0; font-weight: 600;
+}
+.stack { display: flex; flex-direction: column; gap: 7px; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+#scale { width: 100%; height: 13px; border-radius: 3px; border: 1px solid var(--line); }
+.meta { color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.meta div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#status {
+  padding: 3px 8px; border-radius: 999px; font-size: 11px;
+  background: #23282f; color: var(--dim);
+}
+#status.live { background: rgba(80,200,120,.16); color: #6ee7a0; }
+#status.err  { background: rgba(255,90,80,.16); color: #ff8f85; }
+
+/* Its own grid row, so opening it resizes the image and never the sidebar. */
+#logPanel {
+  grid-area: log;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  min-width: 0;
+}
+/* Disclosure bar, shared by the log and (on narrow screens) the controls. */
+.bar { display: flex; align-items: center; gap: 9px; padding: 5px 10px; }
+.bar button {
+  background: none; border: 0; padding: 3px 4px; color: var(--dim);
+  font: inherit; font-size: 11px; cursor: pointer; border-radius: 4px;
+}
+.bar button:hover { color: var(--text); background: #22272f; }
+.bar .toggle { font-weight: 600; letter-spacing: .02em; }
+.chev { display: inline-block; width: 9px; color: var(--accent); }
+.bar .mini { font-size: 10px; }
+body.panel-log #logToggle,
+body.panel-controls #asideToggle { color: var(--text); }
+
+/* The sidebar is permanent on a wide screen, so it needs no disclosure there. */
+#asideBar { display: none; }
+
+#log {
+  margin: 0; height: 190px; overflow: auto;
+  border-top: 1px solid var(--line); background: #0c0e11;
+  padding: 8px 10px;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #9fb3c8; white-space: pre-wrap; word-break: break-word;
+}
+
+
+/* ---- narrow screens -------------------------------------------------------
+   A 234px sidebar beside the image leaves a phone almost no room for the
+   picture, so below this width the panel moves under the image and scrolls.
+   The image keeps a fixed share of the viewport at the top. */
+@media (max-width: 760px) {
+  header { gap: 7px; padding: 7px 9px; }
+  header h1 { font-size: 13px; }
+  #logo { width: 20px; height: 20px; }
+
+  /* The select shows its own value ("Ironbow", "Thermal"), so the caption is
+     the first thing that can go. */
+  .lbl { display: none; }
+
+  /* Roomier hit targets for fingers. */
+  select, button { padding: 7px 11px; }
+  .icon { padding: 7px 9px; }
+
+  /* One column, and only one drawer at a time: the controls and the log both
+     want the bottom of a phone screen, and splitting it between them left
+     neither usable. Tabs at the very bottom choose which — or neither, which
+     hands the whole screen to the image. */
+  main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "stage"
+      "aside"
+      "log";
+  }
+  #stage { padding: 8px; }
+
+  aside { border-left: 0; border-top: 1px solid var(--line); }
+  #asideBar { display: flex; }
+  #asideBody { max-height: 46dvh; padding: 10px 12px 12px; }
+
+  /* Both bars stay put at the bottom; only the open one shows a body, so the
+     two can never share — and shrink — the same strip of screen. Close both
+     and the image gets everything. */
+  body:not(.panel-controls) #asideBody { display: none; }
+  #log { height: 34dvh; }
+
+  /* Four readings as a 2x2 block rather than a tall list. */
+  .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; }
+  .readout h2, .readout .big { grid-column: 1 / -1; }
+
+}

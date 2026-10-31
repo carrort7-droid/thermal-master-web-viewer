@@ -1,0 +1,29 @@
+Thermal Master Web Viewer
+Copyright 2026 the Thermal Master Web Viewer contributors
+
+This software is a derivative work of "thermal-master-viewer":
+
+    https://github.com/ferrolho/thermal-master-viewer
+    Copyright the thermal-master-viewer contributors
+    Licensed under the Apache License, Version 2.0
+
+The upstream project in turn builds on published reverse-engineering and
+independent implementations of the camera protocol:
+
+    jvdillon/p3-ir-camera            original captures and protocol notes
+    skywalker1905/thermal-camera-viewer (Apache-2.0)
+                                     frame resynchronisation approach
+    xaionaro-go/thermalmaster        doc/reverse-engineering.md
+    Phalphy/OpenP3 (MIT)             minimal Linux viewer
+
+Changes in this repository relative to upstream:
+
+  * device profiles extracted into web/js/models.js
+  * P2 Max (USB 3474:42b2) added and verified against hardware
+    (fw 00.00.01.03, hw P2max-00.01, 256x192 @ 25 fps)
+  * unknown product IDs resolve through a documented fallback profile
+  * project renamed and documentation rewritten
+
+"Thermal Master" is a trademark of its owner. It is used here only to state
+which hardware this software talks to. This project is unofficial and is not
+affiliated with, endorsed by, or supported by Thermal Master.
