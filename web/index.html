@@ -131,6 +131,23 @@
 
 </main>
 
+<section id="driverHelp" class="driver-help" hidden>
+  <div class="dh-card">
+    <button id="driverClose" class="dh-x" type="button" aria-label="Dismiss">&times;</button>
+    <h3>Camera needs a one-time driver (P2&nbsp;Max / P3&nbsp;Lite)</h3>
+    <p>Your browser couldn't list the camera. On Windows the thermal camera needs its
+       <b>WinUSB</b> driver bound once &mdash; after that it is plug-and-play forever.</p>
+    <ol>
+      <li>Plug the camera in.</li>
+      <li>Download the one-click installer and <b>double-click</b> it.</li>
+      <li>Windows will ask for administrator permission &mdash; click <b>Yes</b>.</li>
+      <li>Refresh this page and click <b>Connect camera</b>.</li>
+    </ol>
+    <a id="driverDownload" class="dh-btn" href="driver/p2max-setup.bat" download>Download one-click installer</a>
+    <p class="dh-note">If the browser blocks the .bat file, choose &ldquo;Keep&rdquo; / &ldquo;Download anyway&rdquo;.</p>
+  </div>
+</section>
+
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

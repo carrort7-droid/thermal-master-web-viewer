@@ -1,0 +1,39 @@
+; p2max.inf
+; Binds the inbox WinUSB driver to Thermal Master P2 Max (VID_3474&PID_42B2)
+; so that the Thermal Master Web Viewer can open it from the browser via WebUSB.
+;
+; Minimal on purpose: it reuses the Windows inbox winusb.inf, so there are NO
+; external .dll or .cat files to ship. Install once with install.bat; after that
+; the camera is "plug in -> open page -> click Connect" forever.
+
+[Version]
+Signature  = "$Windows NT$"
+Class      = USBDevice
+ClassGuid  = {88BAE032-5A81-49F0-BC3D-A4FF138216D6}
+Provider   = %Manufacturer%
+DriverVer  = 10/31/2026,1.0.0.0
+
+[Manufacturer]
+%Manufacturer% = Models, NTamd64
+
+[Models.NTamd64]
+; Match both the interface (MI_00) and the bare device, in case the
+; interface number differs between firmware revisions.
+%DeviceName% = WinUSBInstall, USB\VID_3474&PID_42B2&MI_00
+%DeviceName% = WinUSBInstall, USB\VID_3474&PID_42B2
+
+[WinUSBInstall]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[WinUSBInstall.HW]
+Include = winusb.inf
+Needs   = WINUSB.NT.HW
+
+[WinUSBInstall.Services]
+Include = winusb.inf
+Needs   = WINUSB.NT.Services
+
+[Strings]
+Manufacturer = "Thermal Master"
+DeviceName   = "Thermal Master P2 Max (WinUSB)"

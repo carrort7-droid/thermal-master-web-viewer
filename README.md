@@ -6,6 +6,8 @@ server, no native driver — the page talks to the camera directly over WebUSB.
 
 Unofficial, and not affiliated with or endorsed by Thermal Master.
 
+中文使用说明见 **[docs/zh-CN.md](docs/zh-CN.md)**。
+
 ## Supported cameras
 
 Recognition is by USB **product ID** (`VID:PID`), not by the product name
@@ -42,19 +44,57 @@ modules, which browsers refuse to load over `file://`.
 
 ### Browser and platform support
 
-| Platform | Notes |
+| Platform | Setup needed to view |
 | --- | --- |
-| Chrome, Edge, Opera | works |
-| Firefox, Safari | no WebUSB, so no |
-| macOS | works as-is |
-| Android | works — plug the camera straight into the phone and open the page |
-| Linux | needs a udev rule granting access to `3474:*` |
-| Windows | the camera interface must be bound to WinUSB (see below) |
+| **Android** (Chrome) | **none** — plug the camera in and open the page |
+| **macOS** (Chrome / Edge) | **none** |
+| **Windows** (Chrome / Edge) | one-time WinUSB bind — the page now auto-prompts with a one-click installer |
+| **Linux** | one udev rule for `3474:*` |
+| iOS / iPadOS (Safari) | not supported — no WebUSB |
+| Firefox / Safari (desktop) | not supported — no WebUSB |
 
-## Windows: binding WinUSB
+## Windows: one-time WinUSB bind
 
-Windows does not let a browser claim a vendor-specific interface that has no
-driver. Bind **WinUSB** once with [Zadig](https://zadig.akeo.ie):
+A web page cannot install drivers, so on Windows the camera's vendor interface
+has to be bound to **WinUSB** once per machine. No JavaScript can change this:
+the browser is only allowed to claim an interface that already has a
+WinUSB-compatible driver.
+
+### If the official Thermal Master software is installed, there is nothing to do
+
+The vendor's Windows software installs signed per-model WinUSB driver packages
+(`P1.cat`, `P2.cat`, `P3.cat`, `P4.cat`). Once one of those is on the machine,
+Windows binds WinUSB automatically every time that model is plugged in, and
+this viewer works with no further step.
+
+A brand-new model is only covered once the vendor adds its product ID to one of
+those packages. Until then, such a camera shows up in Device Manager with
+warning code 28 and needs the manual bind below.
+
+To see which packages a machine has, look for `DeviceID` lines containing
+`VID_3474` in `C:\Windows\INF\oem*.inf` (the files are UTF-16).
+
+### Or use the in-page one-click installer (recommended)
+
+The viewer now detects when Windows has not bound WinUSB yet and **automatically
+shows a setup card** the moment you click *Connect camera* with no device found.
+The card offers a single download — `web/driver/p2max-setup.bat` — that is fully
+self-contained (the driver descriptor is embedded, no extra files needed):
+
+1. Plug the camera in.
+2. Click **Download one-click installer** in the card and double-click the `.bat`.
+3. Windows shows the **User Account Control** prompt — click **Yes** (the script
+   elevates itself to administrator automatically; no right-click needed).
+4. Refresh the page and click **Connect camera**.
+
+If the machine has **Test Mode** off, Windows blocks the unsigned driver; the
+script then turns Test Mode on, asks you to reboot, and you run it once more.
+(Your P3 works driver-less precisely because Test Mode is already on — this is
+the same mechanism.)
+
+### Otherwise, bind it once with Zadig
+
+Bind it once with [Zadig](https://zadig.akeo.ie):
 
 1. Open Zadig → `Options` → **List All Devices**
 2. Pick **P2 MAX** (or your camera) in the device dropdown — check that the
@@ -63,9 +103,18 @@ driver. Bind **WinUSB** once with [Zadig](https://zadig.akeo.ie):
 4. Click **Install Driver** (or **Replace Driver** if a driver is present)
 
 This changes only that machine's driver binding; the camera itself is not
-modified. On another Windows PC, repeat the step once (or install the vendor
-software). Android, iOS and macOS need none of this. To undo it, uninstall the
-device in Device Manager and rescan.
+modified. To undo it, uninstall the device in Device Manager and rescan.
+
+### Making it zero-setup for every visitor
+
+The only way to remove this step for end users is on the **firmware** side, not
+in this repository: expose a Microsoft OS 2.0 descriptor set that advertises
+the `WINUSB` compatible ID. Windows then binds WinUSB automatically the first
+time the camera is plugged into a clean machine, and the viewer works with no
+Zadig, no installer and no admin rights.
+
+That change is specified, with the descriptor layout and a verification
+procedure, in [docs/windows-zero-setup.md](docs/windows-zero-setup.md).
 
 ## Features
 
@@ -135,6 +184,7 @@ web/js/palettes.js   colour palettes
 web/js/download.js   handing a generated file to the browser
 web/js/session.js    the camera in use, shared between modules
 web/js/main.js       entry point and connection flow
+web/driver/p2max-setup.bat   self-contained Windows WinUSB binder, surfaced by the in-page setup card
 tools/usb-info.py    optional descriptor dump for troubleshooting
 tests/               tests for the shipped driver and log helpers
 ```
@@ -155,6 +205,15 @@ byte, CRC included, against buffers captured from the official app.
 
 **The picker shows no device.** On Windows, bind WinUSB first. On Linux, add a
 udev rule. Use `python3 tools/usb-info.py` to check what the OS sees.
+
+On Windows the fastest way to tell what is wrong is:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\windows\check-driver.ps1
+```
+
+It prints, per connected camera, the driver in use and whether the viewer can
+open it.
 
 **The image looks flat and grey.** Usually correct — a room is nearly uniform
 in temperature. Point it at something warm, or switch the range mode.

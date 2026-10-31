@@ -61,7 +61,15 @@ connectBtn.onclick = async () => {
   try {
     await run(await Camera.request());
   } catch (err) {
-    if (err.name !== "NotFoundError") setStatus(`${err.name}: ${err.message}`, "err");
+    if (err.name === "NotFoundError") {
+      // Empty picker / user cancelled with no device. On Windows this almost
+      // always means the WinUSB driver is not bound yet (P2 Max / P3 Lite in
+      // particular), so surface the one-click installer.
+      showDriverHelp();
+      setStatus("driver setup needed", "err");
+    } else {
+      setStatus(`${err.name}: ${err.message}`, "err");
+    }
   }
 };
 
@@ -106,3 +114,14 @@ async function start() {
 }
 
 start();
+
+// --- one-time driver helper (Windows / P2 Max / P3 Lite) ------------------
+function showDriverHelp() {
+  const el = document.getElementById("driverHelp");
+  if (el) el.hidden = false;
+}
+const driverClose = document.getElementById("driverClose");
+if (driverClose) driverClose.onclick = () => {
+  const el = document.getElementById("driverHelp");
+  if (el) el.hidden = true;
+};

@@ -179,3 +179,31 @@ body.panel-controls #asideToggle { color: var(--text); }
   .readout h2, .readout .big { grid-column: 1 / -1; }
 
 }
+
+/* ---- one-time driver helper card --------------------------------------- */
+.driver-help {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  background: rgba(0,0,0,.55); padding: 16px;
+}
+.driver-help .dh-card {
+  position: relative; max-width: 460px; width: 100%;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 20px 22px;
+}
+.driver-help h3 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
+.driver-help p { color: var(--dim); margin: 0 0 12px; }
+.driver-help ol { margin: 0 0 14px; padding-left: 20px; color: var(--text); }
+.driver-help ol li { margin: 4px 0; }
+.driver-help .dh-btn {
+  display: inline-block; background: var(--accent); color: #14161a;
+  font-weight: 600; text-decoration: none; border-radius: 6px;
+  padding: 9px 16px; cursor: pointer;
+}
+.driver-help .dh-note { font-size: 11px; margin: 10px 0 0; }
+.driver-help .dh-x {
+  position: absolute; top: 8px; right: 12px;
+  background: none; border: 0; color: var(--dim); font-size: 22px;
+  line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.driver-help .dh-x:hover { color: var(--text); }
