@@ -74,23 +74,27 @@ warning code 28 and needs the manual bind below.
 To see which packages a machine has, look for `DeviceID` lines containing
 `VID_3474` in `C:\Windows\INF\oem*.inf` (the files are UTF-16).
 
-### Or use the in-page one-click installer (recommended)
+### Or use the in-page installer (recommended)
 
-The viewer now detects when Windows has not bound WinUSB yet and **automatically
-shows a setup card** the moment you click *Connect camera* with no device found.
-The card offers a single download — `web/driver/p2max-setup.bat` — that is fully
-self-contained (the driver descriptor is embedded, no extra files needed):
+The viewer **automatically shows a setup card** when it finds the camera but
+cannot claim its interface — the Windows "driver not installed" symptom (Device
+Manager warning code 28). The card offers a single download —
+`web/driver/p2max-setup.bat` — that is fully self-contained (the driver
+descriptor is embedded, no extra files needed):
 
 1. Plug the camera in.
-2. Click **Download one-click installer** in the card and double-click the `.bat`.
+2. Click **Download driver setup (.bat)** in the card and double-click the file.
 3. Windows shows the **User Account Control** prompt — click **Yes** (the script
-   elevates itself to administrator automatically; no right-click needed).
-4. Refresh the page and click **Connect camera**.
+   asks for administrator rights itself; no right-click needed).
+4. Refresh the page and click **Connect camera** again.
 
-If the machine has **Test Mode** off, Windows blocks the unsigned driver; the
-script then turns Test Mode on, asks you to reboot, and you run it once more.
-(Your P3 works driver-less precisely because Test Mode is already on — this is
-the same mechanism.)
+The script binds the in-box `winusb.inf` to `VID_3474&PID_42B2` (both the control
+and streaming interfaces), and only for this camera. It does **not** enable Test
+Mode and does **not** change Secure Boot, driver signing or any other system
+setting; it never reboots and never touches another USB device. On a machine
+with driver-signature enforcement the unsigned INF can still be blocked — the
+script says so and points to the official Thermal Master driver or Zadig
+instead. The same INF is readable at `web/driver/p2max.inf`.
 
 ### Otherwise, bind it once with Zadig
 

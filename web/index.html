@@ -131,22 +131,29 @@
 
 </main>
 
-<section id="driverHelp" class="driver-help" hidden>
-  <div class="dh-card">
-    <button id="driverClose" class="dh-x" type="button" aria-label="Dismiss">&times;</button>
-    <h3>Camera needs a one-time driver (P2&nbsp;Max / P3&nbsp;Lite)</h3>
-    <p>Your browser couldn't list the camera. On Windows the thermal camera needs its
-       <b>WinUSB</b> driver bound once &mdash; after that it is plug-and-play forever.</p>
-    <ol>
-      <li>Plug the camera in.</li>
-      <li>Download the one-click installer and <b>double-click</b> it.</li>
-      <li>Windows will ask for administrator permission &mdash; click <b>Yes</b>.</li>
-      <li>Refresh this page and click <b>Connect camera</b>.</li>
-    </ol>
-    <a id="driverDownload" class="dh-btn" href="driver/p2max-setup.bat" download>Download one-click installer</a>
-    <p class="dh-note">If the browser blocks the .bat file, choose &ldquo;Keep&rdquo; / &ldquo;Download anyway&rdquo;.</p>
+<div id="driverHelp" class="driver-help" hidden>
+  <div class="driver-card">
+    <button id="driverClose" class="driver-x" aria-label="Close">&times;</button>
+    <h2>Driver setup needed</h2>
+    <p>
+      The browser found the camera but could not open it
+      (<code>claimInterface</code> failed). On Windows this almost always means the
+      WinUSB driver is not bound to this device — Device Manager shows
+      <code>USB\VID_3474&amp;PID_42B2&amp;MI_00</code> with
+      <strong>Problem Code 28</strong>.
+    </p>
+    <p>
+      Run the one-time setup below, then reconnect: click
+      <strong>Connect camera</strong> again.
+    </p>
+    <a class="driver-btn" href="driver/p2max-setup.bat" download>Download driver setup (.bat)</a>
+    <p class="driver-note">
+      Right-click the downloaded file and choose <em>Run as administrator</em>.
+      It only touches this camera (VID 3474 / PID 42B2) and changes no other
+      device or system setting.
+    </p>
   </div>
-</section>
+</div>
 
 <script type="module" src="js/main.js"></script>
 </body>

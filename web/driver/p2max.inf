@@ -1,0 +1,39 @@
+; p2max.inf
+; Binds the in-box Windows WinUSB driver to Thermal Master P2 Max / P3 Lite
+; (VID_3474 & PID_42B2) so the Thermal Master Web Viewer can open it from the
+; browser via WebUSB. Reuses the system winusb.inf -- no external .dll/.cat shipped.
+;
+; Both interfaces must be bound to WinUSB:
+;   USB\VID_3474&PID_42B2&MI_00  -> control interface (claimInterface 0)
+;   USB\VID_3474&PID_42B2&MI_01  -> streaming interface (claimInterface 1)
+; This package matches ONLY this device; it does not touch any other USB device.
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = USBDevice
+ClassGuid   = {88BAE032-5A81-49f0-BC3D-A4FF138216D6}
+Provider    = %Manufacturer%
+DriverVer   = 11/02/2026,1.0.0.0
+
+[Manufacturer]
+%Manufacturer% = Models, NTamd64
+
+[Models.NTamd64]
+%DeviceName% = WinUSBInstall, USB\VID_3474&PID_42B2&MI_00
+%DeviceName% = WinUSBInstall, USB\VID_3474&PID_42B2&MI_01
+
+[WinUSBInstall]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[WinUSBInstall.HW]
+Include = winusb.inf
+Needs   = WINUSB.NT.HW
+
+[WinUSBInstall.Services]
+Include = winusb.inf
+Needs   = WINUSB.NT.Services
+
+[Strings]
+Manufacturer = "Thermal Master"
+DeviceName   = "Thermal Master P2 Max (WinUSB)"

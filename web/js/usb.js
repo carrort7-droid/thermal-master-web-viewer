@@ -16,6 +16,24 @@ const EP_IN = 1;            // endpoint 0x81
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// A driver that never answers can leave claimInterface() pending forever, which
+// looks like "stuck at claiming control interface" and never reaches a catch
+// block. Race it against a timeout so the caller always gets an error and the
+// in-page driver help can appear. A healthy device claims in milliseconds, so
+// this never fires on the working path.
+function claimWithTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const e = new Error(`${label} timed out after ${ms} ms`);
+      e.name = "TimeoutError";
+      reject(e);
+    }, ms);
+  });
+  promise.catch(() => {}); // avoid an unhandled rejection if it settles late
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export function crc16(bytes) {
   let crc = 0;
   for (const b of bytes) {
@@ -130,9 +148,34 @@ export class Camera {
       await this.dev.selectConfiguration(1);
     }
     step("claiming control interface");
-    await this.dev.claimInterface(IFACE_CTRL);
+    try {
+      console.log("[USB] claiming interface 0 (control)");
+      await claimWithTimeout(this.dev.claimInterface(IFACE_CTRL), 15000, "claimInterface(0)");
+      console.log("[USB] interface 0 claimed successfully");
+    } catch (e) {
+      console.error("[USB] interface 0 claim failed:", e && e.name, e && e.message, e);
+      const err = new Error(`Interface 0 (control) claim failed: ${e && e.name}: ${e && e.message}`);
+      err.name = (e && e.name) ? e.name : "Error";
+      err.claimFailed = true;
+      err.interface = 0;
+      err.original = e;
+      throw err;
+    }
+
     step("claiming streaming interface");
-    await this.dev.claimInterface(IFACE_STREAM);
+    try {
+      console.log("[USB] claiming interface 1 (streaming)");
+      await claimWithTimeout(this.dev.claimInterface(IFACE_STREAM), 15000, "claimInterface(1)");
+      console.log("[USB] interface 1 claimed successfully");
+    } catch (e) {
+      console.error("[USB] interface 1 claim failed:", e && e.name, e && e.message, e);
+      const err = new Error(`Interface 1 (streaming) claim failed: ${e && e.name}: ${e && e.message}`);
+      err.name = (e && e.name) ? e.name : "Error";
+      err.claimFailed = true;
+      err.interface = 1;
+      err.original = e;
+      throw err;
+    }
   }
 
   async close() {

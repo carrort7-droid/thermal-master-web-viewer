@@ -16,9 +16,33 @@ function setStatus(text, cls = "") {
   statusEl.className = cls;
 }
 
+// --- driver-install help -------------------------------------------------
+// The card is shown ONLY when a connect failed specifically while claiming a
+// USB interface (the Windows "driver not installed" symptom: a device the
+// browser can see and select but cannot open — Device Manager ProblemCode 28).
+// Failures at any other stage (read info, start stream, mid-stream disconnect)
+// must NOT trigger it, so we key off the `claimFailed` flag set in usb.js.
+function showDriverHelp() {
+  const card = document.getElementById("driverHelp");
+  if (card) card.hidden = false;
+}
+function hideDriverHelp() {
+  const card = document.getElementById("driverHelp");
+  if (card) card.hidden = true;
+}
+function reportError(err) {
+  const msg = `${err && err.name ? err.name : "Error"}: ${err && err.message ? err.message : String(err)}`;
+  setStatus(msg, "err");
+  connectBtn.hidden = false;
+  session.cam = null;
+  keepAwake(false);
+  if (err && err.claimFailed) showDriverHelp();
+}
+
 async function run(cam) {
   session.cam = cam;
   connectBtn.hidden = true;
+  hideDriverHelp();
   try {
     await cam.open(setStatus);
     state.info = await cam.readInfo();
@@ -29,10 +53,14 @@ async function run(cam) {
     startMeta();
     keepAwake(true);  // a phone locking mid-measurement helps nobody
   } catch (err) {
-    setStatus(`${err.name || "error"}: ${err.message}`, "err");
-    connectBtn.hidden = false;
-    session.cam = null;
-    keepAwake(false);
+    // Release a half-open device / claimed interface. A claimInterface that
+    // timed out can still be in flight underneath (a promise cannot be
+    // cancelled), so closing best-effort leaves the next attempt clean.
+    // Fire-and-forget: never block the error path on a wedged device.
+    if (cam && typeof cam.close === "function") {
+      try { cam.close().catch(() => {}); } catch {}
+    }
+    reportError(err);
     return;
   }
 
@@ -57,21 +85,28 @@ async function run(cam) {
   keepAwake(false);
 }
 
+// One connect flow at a time. The button is only hidden after the picker
+// resolves, so without this a double-click would open two flows against the
+// same device and fight over its interfaces.
+let connecting = false;
+
 connectBtn.onclick = async () => {
+  if (connecting) return;
+  connecting = true;
+  connectBtn.disabled = true;
   try {
     await run(await Camera.request());
   } catch (err) {
-    if (err.name === "NotFoundError") {
-      // Empty picker / user cancelled with no device. On Windows this almost
-      // always means the WinUSB driver is not bound yet (P2 Max / P3 Lite in
-      // particular), so surface the one-click installer.
-      showDriverHelp();
-      setStatus("driver setup needed", "err");
-    } else {
-      setStatus(`${err.name}: ${err.message}`, "err");
-    }
+    if (err.name !== "NotFoundError") setStatus(`${err.name}: ${err.message}`, "err");
+  } finally {
+    connecting = false;
+    connectBtn.disabled = false;
   }
 };
+
+// Driver-help card close button (card is an overlay, independent of other UI state).
+const driverCloseBtn = document.getElementById("driverClose");
+if (driverCloseBtn) driverCloseBtn.onclick = hideDriverHelp;
 
 function showMeta(extra) {
   const rows = Object.entries({
@@ -114,14 +149,3 @@ async function start() {
 }
 
 start();
-
-// --- one-time driver helper (Windows / P2 Max / P3 Lite) ------------------
-function showDriverHelp() {
-  const el = document.getElementById("driverHelp");
-  if (el) el.hidden = false;
-}
-const driverClose = document.getElementById("driverClose");
-if (driverClose) driverClose.onclick = () => {
-  const el = document.getElementById("driverHelp");
-  if (el) el.hidden = true;
-};
