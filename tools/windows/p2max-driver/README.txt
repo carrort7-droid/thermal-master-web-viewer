@@ -1,33 +1,40 @@
-P2 Max / P3 Lite — Windows 一键驱动（让网页点 Connect 就能用）
-==============================================================
+Thermal Master P2 MAX / P3 Lite —— Windows 一键驱动安装
+=======================================================
 
-为什么需要这一步
-----------------
-WebUSB 在 Windows 上必须先把“WinUSB”驱动绑到设备，浏览器才看得见它。
-你的 P3 之所以插上就用，是因为官方软件已经用自签驱动把 P3 绑好了；
-P2 Max（硬件 ID：VID_3474&PID_42B2）当时不在那个包里，所以只差这一下绑定。
-绑完之后是永久的：插上 → 开网页 → 点 Connect，结束。
+前提：相机已插上，Windows 10 或 11（64 位）。
 
-怎么装（二选一，都只要一次）
-----------------------------
+怎么用
+------
+双击 install.bat → UAC 点「是」→ 等十几秒 → 回到网页点 Connect camera。
 
-方法一（推荐，双击即可）
-  1. 把 P2 Max / P3 Lite 插上电脑。
-  2. 右键 install.bat → “以管理员身份运行”。
-  3. 看到 SUCCESS 就完事。打开网页点 Connect 即可。
-  如果你的机器弹出“驱动未签名”警告（说明没开测试模式），
-  先跑一次 enable-testmode.bat，重启，再跑 install.bat。
+不需要重启，不需要开 Test Mode，不需要装 Zadig，也不需要装官方软件。
 
-方法二（Zadig，100% 稳）
-  打开 Zadig → 选 P2 Max → 选 WinUSB → 点 Install/Replace。一分钟，无需重启。
+它做了什么
+----------
+1. pnputil 先直接装一次（必然失败：厂商 INF 没有 .cat 签名目录）
+2. dpscat.exe 依据 p2max.inf 现生成一个 p2max.cat
+3. 用本机自签证书给 cat 签名，并把该证书导入 Root + TrustedPublisher
+4. 再跑 pnputil /add-driver /install，这次系统接受
+5. pnputil /scan-devices 触发重新枚举
+6. 复查设备状态：Service = WinUSB，ProblemCode = 0
 
-装完验证
---------
-管理员 PowerShell 跑：
-  powershell -ExecutionPolicy Bypass -File ..\check-driver.ps1
-看到 “RESULT : READY - the web viewer can open this camera” 即可。
+只改这一台机器的驱动绑定，不碰 Secure Boot、不动驱动签名策略、不影响其他 USB 设备。
 
-之后
+文件
 ----
-每次插上设备，Windows 会自动绑 WinUSB，网页点 Connect 直接连，
-不用再装任何东西、不用找人、不用改固件。
+p2max.inf      把系统自带的 winusb.inf 绑定到 VID_3474&PID_42B2（只此一个设备）
+dpscat.exe     由 INF 生成 catalog（微软 DIFx 工具，取自官方安装包）
+install.ps1    安装器主体，含 -Verify / -Uninstall
+install.bat    双击入口
+
+排错
+----
+日志：C:\ProgramData\P2MaxDriver\install.log
+
+只检查不安装：
+    powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 -Verify
+
+卸载：
+    powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 -Uninstall
+
+退出码：0 成功 / 1 失败 / 3 设备未插入

@@ -79,8 +79,8 @@ To see which packages a machine has, look for `DeviceID` lines containing
 The viewer **automatically shows a setup card** when it finds the camera but
 cannot claim its interface — the Windows "driver not installed" symptom (Device
 Manager warning code 28). The card offers a single download —
-`web/driver/p2max-setup.bat` — that is fully self-contained (the driver
-descriptor is embedded, no extra files needed):
+`web/driver/p2max-setup.bat` — that is a small bootstrapper: it downloads the installer assets
+(`install.ps1`, `dpscat.exe` and the INF) from this site, then runs them:
 
 1. Plug the camera in.
 2. Click **Download driver setup (.bat)** in the card and double-click the file.
@@ -89,12 +89,16 @@ descriptor is embedded, no extra files needed):
 4. Refresh the page and click **Connect camera** again.
 
 The script binds the in-box `winusb.inf` to `VID_3474&PID_42B2` (both the control
-and streaming interfaces), and only for this camera. It does **not** enable Test
-Mode and does **not** change Secure Boot, driver signing or any other system
-setting; it never reboots and never touches another USB device. On a machine
-with driver-signature enforcement the unsigned INF can still be blocked — the
-script says so and points to the official Thermal Master driver or Zadig
-instead. The same INF is readable at `web/driver/p2max.inf`.
+and streaming interfaces), and only for this camera.
+
+A driver package needs a signed `.cat` catalog and the vendor package ships none,
+so the script generates one with `dpscat.exe`, signs it with a local self-signed
+certificate, trusts that certificate (Root + TrustedPublisher), and only then runs
+`pnputil /add-driver /install`. That is what makes it work on a machine with driver
+signature enforcement **without** Test Mode, without `bcdedit`, without a reboot, and
+without touching Secure Boot or any other USB device. It is the same mechanism Zadig
+uses, just automated. The INF itself is readable at `web/driver/p2max.inf`; the
+installer sources live in `tools/windows/p2max-driver/`.
 
 ### Otherwise, bind it once with Zadig
 

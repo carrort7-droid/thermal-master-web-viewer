@@ -8,8 +8,8 @@ vendor-specific interface (`class 0xFF`) with no driver, so the browser cannot
 open it — Device Manager shows code 28 ("drivers not installed").
 
 No JavaScript, and no change to this repository, can fix that: a web page has
-no way to install a driver. Today the workaround is a one-time manual bind with
-Zadig.
+no way to install a driver. Today the workaround is a one-time install from `tools/windows/p2max-driver/`
+(or a manual bind with Zadig — the installer just automates the same thing).
 
 ### Verified on hardware (2026-10-31)
 
