@@ -11,7 +11,7 @@ if not "%errorlevel%"=="0" (
   exit /b
 )
 
-set "DIR=%TEMP%\p2max-driver"
+set "DIR=%ProgramData%\P2MaxDriver\bin"
 set "BASE=https://carrort7-droid.github.io/thermal-master-web-viewer/driver"
 
 echo.
@@ -20,7 +20,7 @@ echo  -----------------------------------------------------
 if not exist "%DIR%" mkdir "%DIR%"
 
 echo  Downloading installer files...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $b='%BASE%'; $d='%DIR%'; foreach($f in 'install.ps1','dpscat.exe','p2max.inf'){ Invoke-WebRequest -UseBasicParsing -Uri ($b+'/'+$f) -OutFile (Join-Path $d $f) }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol = 3072; $b='%BASE%'; $d='%DIR%'; foreach($f in 'install.ps1','dpscat.exe','p2max.inf'){ $p = Join-Path $d $f; Invoke-WebRequest -UseBasicParsing -Uri ($b+'/'+$f) -OutFile $p; Unblock-File -LiteralPath $p }"
 if not "%errorlevel%"=="0" (
   echo.
   echo  [FAIL] Could not download the installer. Check your connection.

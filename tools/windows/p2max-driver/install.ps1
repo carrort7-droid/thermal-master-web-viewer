@@ -59,9 +59,13 @@ function Get-State {
 
 function Test-Ready {
   param($Rows)
+  # 首选子接口节点（复合设备的情况）
   $f = $Rows | Where-Object { $_.Id -like '*MI_00*' } | Select-Object -First 1
-  if (-not $f) { return $false }
-  return ($f.Service -eq 'WINUSB' -and $f.Problem -eq 0)
+  if ($f) { return ($f.Service -eq 'WINUSB' -and $f.Problem -eq 0) }
+  # INF 也可能把 WinUSB 绑在复合设备的父节点上，此时没有 MI_00 子节点；
+  # 只要有任意一个节点是 WINUSB 且无错误码，就认为可用。
+  $any = @($Rows | Where-Object { $_.Service -eq 'WINUSB' -and $_.Problem -eq 0 })
+  return ($any.Count -gt 0)
 }
 
 function Show-State {
@@ -85,12 +89,29 @@ function Invoke-Cmd {
   Log "[$Tag] $(Split-Path -Leaf $Exe) $($ArgList -join ' ')"
   $out  = & $Exe @ArgList 2>&1 | Out-String
   $code = $LASTEXITCODE
+  $script:LastToolOutput = $out
   foreach ($l in ($out -split "`r?`n")) { if ($l.Trim()) { Log "    $($l.Trim())" 'TOOL' } }
   if ($out -match 'PNPUTIL \[') {
-    Log "[$Tag] 看起来参数没有传进去（pnputil 打印了帮助）" 'ERR'
+    Log "[$Tag] pnputil 打印了帮助，参数可能没被接受" 'WARN'
   }
   Log "[$Tag] 退出码: $code"
   return $code
+}
+
+# pnputil /install 是 Windows 10 2004 之后才有的；老系统上会因「无效语法」退回帮助。
+# 这里检测到帮助输出就自动退回两步法：/add-driver 然后 /scan-devices。
+function Invoke-AddDriver {
+  param([string]$Inf, [string]$Tag)
+  $rc = Invoke-Cmd 'pnputil.exe' @('/add-driver', $Inf, '/install') $Tag
+  if ($rc -eq 99) { return 99 }
+  if ($script:LastToolOutput -match 'PNPUTIL \[') {
+    Log "[$Tag] 此系统的 pnputil 不支持 /install，改用两步法。" 'WARN'
+    $rc2 = Invoke-Cmd 'pnputil.exe' @('/add-driver', $Inf) $Tag
+    if ($rc2 -ne 0) { return $rc2 }
+    Invoke-Cmd 'pnputil.exe' @('/scan-devices') 'RESCAN' | Out-Null
+    return 0
+  }
+  return $rc
 }
 
 # ---------------------------------------------------------------- 提权
@@ -141,6 +162,17 @@ if ($Uninstall) {
 try {
   Log "=== 开始安装 ($(Get-Date -Format s)) ==="
 
+  $build = [Environment]::OSVersion.Version.Build
+  Log "Windows build: $build"
+  if ($build -lt 17763) {
+    Log '需要 Windows 10 1809（build 17763）或更高版本：WebUSB 与 pnputil /install 都依赖它。' 'ERR'
+    exit 1
+  }
+  if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Log "PowerShell $($PSVersionTable.PSVersion) 太旧，需要 5.1 或更高。" 'ERR'
+    exit 1
+  }
+
   if (-not (Test-Path $InfPath)) { Log "找不到 $InfPath" 'ERR'; exit 1 }
   if (-not $state -or $state.Count -eq 0) { Log '设备未插入：请先插上相机再运行。' 'ERR'; exit 3 }
   if (Test-Ready $state) { Log '驱动已就绪，无需安装。' 'OK'; exit 0 }
@@ -155,7 +187,7 @@ try {
 
   # 2) 阶段 A：直接装（缺 cat 会明确报「不包含数字签名信息」）
   Log '--- 阶段 A：pnputil 直接安装 ---'
-  $rcA = Invoke-Cmd 'pnputil.exe' @('/add-driver', $stageInf, '/install') 'A'
+  $rcA = Invoke-AddDriver -Inf $stageInf -Tag 'A'
   if ($rcA -eq 99) { Log '命令没有真正执行，中止。' 'ERR'; exit 1 }
   Start-Sleep -Seconds 2
   $state = Get-State
@@ -203,7 +235,7 @@ try {
       }
 
       Log '--- 阶段 B：pnputil 带签名重装 ---'
-      Invoke-Cmd 'pnputil.exe' @('/add-driver', $stageInf, '/install') 'B' | Out-Null
+      Invoke-AddDriver -Inf $stageInf -Tag 'B' | Out-Null
       Invoke-Cmd 'pnputil.exe' @('/scan-devices') 'RESCAN' | Out-Null
       Start-Sleep -Seconds 3
       $state = Get-State
