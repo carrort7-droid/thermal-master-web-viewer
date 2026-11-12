@@ -19,7 +19,7 @@ non-ASCII byte or a mid-file chcp breaks line parsing.
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent
-BASE = "https://carrort7-droid.github.io/thermal-master-web-viewer/tools/windows/p2max-driver"
+BASE = "https://carrort7-droid.github.io/thermal-master-web-viewer/driver"
 
 BAT = f"""@echo off
 setlocal

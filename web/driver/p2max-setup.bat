@@ -12,7 +12,7 @@ if not "%errorlevel%"=="0" (
 )
 
 set "DIR=%TEMP%\p2max-driver"
-set "BASE=https://carrort7-droid.github.io/thermal-master-web-viewer/tools/windows/p2max-driver"
+set "BASE=https://carrort7-droid.github.io/thermal-master-web-viewer/driver"
 
 echo.
 echo  Thermal Master P2 MAX ^(P3 Lite^) - WinUSB driver setup

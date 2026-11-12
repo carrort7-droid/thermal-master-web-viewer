@@ -33,6 +33,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Stage installer assets
+        # The published root is ./web, so the driver installer that lives in
+        # tools/windows/p2max-driver has to be copied next to the page that
+        # links to it. Copying here keeps a single source of truth.
+        run: |
+          cp tools/windows/p2max-driver/install.ps1 web/driver/
+          cp tools/windows/p2max-driver/dpscat.exe  web/driver/
+          cp tools/windows/p2max-driver/p2max.inf   web/driver/
+          ls -l web/driver/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
