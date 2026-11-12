@@ -53,14 +53,7 @@ powershell -ExecutionPolicy Bypass -File tools\windows\check-driver.ps1
 下载 `web/driver/p2max-setup.bat`，双击，UAC 点「是」。
 脚本会生成并自签 catalog 再绑定 WinUSB —— 不用开 Test Mode，不用重启。
 
-**3. 用 Zadig 绑定 WinUSB（只解决当前型号）**
-1. 下载 <https://zadig.akeo.ie>
-2. `Options → List All Devices`，选中你的相机
-3. 核对 USB ID 是 `3474`，再点 `Install Driver`
-
-> 显卡、鼠标等设备不要动，只对相机操作。
-
-**4. 让研发把 PID 加进驱动包（一劳永逸）**
+**3. 让研发把 PID 加进驱动包（一劳永逸）**
 驱动包是按 PID 匹配的，新型号必须加一行才会被覆盖。
 详见 [windows-zero-setup.md](windows-zero-setup.md)。
 

@@ -42,7 +42,7 @@ foreach ($d in $devices | Sort-Object InstanceId) {
 
     if ($ready) {
         $origin = switch -Wildcard ($prov) {
-            "libwdi"   { "installed by Zadig / libwdi" }
+            "libwdi"   { "installed by a third-party tool (libwdi)" }
             "Microsoft" { "vendor driver package or Windows inbox" }
             default    { "third-party package" }
         }
@@ -51,11 +51,11 @@ foreach ($d in $devices | Sort-Object InstanceId) {
     elseif ($prob -eq 28) {
         Write-Output "RESULT   : NOT READY - no driver installed (code 28)"
         Write-Output "           Install the official Thermal Master Windows software,"
-        Write-Output "           or bind WinUSB with Zadig. See docs/windows-zero-setup.md."
+        Write-Output "           or run tools\windows\p2max-driver\install.bat. See docs/windows-zero-setup.md."
     }
     else {
         Write-Output "RESULT   : NOT READY - driver present but not WinUSB"
-        Write-Output "           Bind WinUSB with Zadig, replacing the current driver."
+        Write-Output "           Run tools\windows\p2max-driver\install.bat to rebind it to WinUSB."
     }
     Write-Output ""
 }

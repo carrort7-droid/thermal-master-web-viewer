@@ -144,7 +144,7 @@ def main() -> int:
         print(f"    -> MS OS 1.0 WINUSB: {'YES' if os10 else 'no'}")
         print(f"    -> MS OS 2.0 WINUSB: {'YES' if os20 else 'no'}")
         print(f"    -> RESULT: {'WCID PRESENT - Windows will install WinUSB automatically'
-                                if wcid else 'NO WCID - Windows needs an INF (Zadig or vendor installer)'}")
+                                if wcid else 'NO WCID - Windows needs an INF (vendor installer)'}")
 
     print("=" * 60)
     print("SUMMARY: " + ("at least one camera is self-configuring on Windows"

@@ -7,7 +7,7 @@ REM  2. Double-click this file.
 REM  3. Click "Yes" on the UAC prompt.
 REM  4. Go back to the web viewer and click "Connect camera".
 REM
-REM  No reboot, no Test Mode, no Zadig.
+REM  No reboot, no Test Mode.
 REM ---------------------------------------------------------------------------
 setlocal
 cd /d "%~dp0"

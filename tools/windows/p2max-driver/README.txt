@@ -7,7 +7,7 @@ Thermal Master P2 MAX / P3 Lite —— Windows 一键驱动安装
 ------
 双击 install.bat → UAC 点「是」→ 等十几秒 → 回到网页点 Connect camera。
 
-不需要重启，不需要开 Test Mode，不需要装 Zadig，也不需要装官方软件。
+不需要重启，不需要开 Test Mode，也不需要装官方软件。
 
 它做了什么
 ----------

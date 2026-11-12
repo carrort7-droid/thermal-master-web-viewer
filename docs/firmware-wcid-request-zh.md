@@ -91,7 +91,7 @@ Chrome 官方文档明确：*"Windows 上打开 USB 设备不是默认能力，�
    ```
    （工具：仓库内 `tools/probe-ms-os.py`，命令 `python tools/probe-ms-os.py`）
 
-2. **干净 Windows**（未装过任何 Thermal Master 软件、未跑过 Zadig）插入相机：
+2. **干净 Windows**（未装过任何 Thermal Master 软件、未做过任何驱动绑定）插入相机：
    - 设备管理器**无黄色感叹号**
    - 驱动详情：`Service = WinUSB`，**`INF = winusb.inf`**（注意：不是 `oemXX.inf`）
 

@@ -96,30 +96,32 @@ so the script generates one with `dpscat.exe`, signs it with a local self-signed
 certificate, trusts that certificate (Root + TrustedPublisher), and only then runs
 `pnputil /add-driver /install`. That is what makes it work on a machine with driver
 signature enforcement **without** Test Mode, without `bcdedit`, without a reboot, and
-without touching Secure Boot or any other USB device. It is the same mechanism Zadig
-uses, just automated. The INF itself is readable at `web/driver/p2max.inf`; the
+without touching Secure Boot or any other USB device. The INF itself is readable at `web/driver/p2max.inf`; the
 installer sources live in `tools/windows/p2max-driver/`.
 
-### Otherwise, bind it once with Zadig
+### If the one-click installer fails
 
-Bind it once with [Zadig](https://zadig.akeo.ie):
+Run the same installer in check-only mode to see what Windows thinks:
 
-1. Open Zadig → `Options` → **List All Devices**
-2. Pick **P2 MAX** (or your camera) in the device dropdown — check that the
-   USB ID reads `3474` / `42B2` (or `45A2` / `45C2`) before continuing
-3. Leave **Target Driver** on `WinUSB (v6.1.7600.16385)`
-4. Click **Install Driver** (or **Replace Driver** if a driver is present)
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\windows\p2max-driver\install.ps1 -Verify
+```
 
-This changes only that machine's driver binding; the camera itself is not
-modified. To undo it, uninstall the device in Device Manager and rescan.
+`ready:true` means the camera is bound and the viewer can open it. Otherwise the
+script prints the device instance, the bound service and the problem code, and
+writes the full log to `C:\ProgramData\P2MaxDriver\install.log` — attach that
+when reporting an issue.
+
+Installing the official Thermal Master Windows software is also a valid fix: it
+ships per-model signed WinUSB packages, so the camera is bound automatically on
+every plug-in and this viewer needs no extra step.
 
 ### Making it zero-setup for every visitor
 
 The only way to remove this step for end users is on the **firmware** side, not
 in this repository: expose a Microsoft OS 2.0 descriptor set that advertises
 the `WINUSB` compatible ID. Windows then binds WinUSB automatically the first
-time the camera is plugged into a clean machine, and the viewer works with no
-Zadig, no installer and no admin rights.
+time the camera is plugged into a clean machine, and the viewer works with no driver install and no admin rights.
 
 That change is specified, with the descriptor layout and a verification
 procedure, in [docs/windows-zero-setup.md](docs/windows-zero-setup.md).

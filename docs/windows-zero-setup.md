@@ -8,8 +8,7 @@ vendor-specific interface (`class 0xFF`) with no driver, so the browser cannot
 open it — Device Manager shows code 28 ("drivers not installed").
 
 No JavaScript, and no change to this repository, can fix that: a web page has
-no way to install a driver. Today the workaround is a one-time install from `tools/windows/p2max-driver/`
-(or a manual bind with Zadig — the installer just automates the same thing).
+no way to install a driver. Today the workaround is a one-time install from `tools/windows/p2max-driver/`.
 
 ### Verified on hardware (2026-10-31)
 
@@ -27,7 +26,7 @@ WCID**:
 | Interface 1 | alt 0 empty, alt 1 EP `0x81`+`0x02` | same |
 
 So a Windows machine where P3 "just works" is not getting that from the
-camera — it already has a WinUSB driver bound (vendor package or Zadig). On a
+camera — it already has a WinUSB driver bound (vendor package or a third-party driver tool). On a
 genuinely clean Windows install, **both models** show code 28.
 
 The useful corollary: because P3 and P2 Max are identical at the USB level,
@@ -87,7 +86,7 @@ web viewer. Note that a package is matched per product ID: `P2.cat` covers
 
 Teach the **firmware** to tell Windows what driver it wants. Windows has
 two built-in mechanisms for exactly this, and either one makes Windows install
-WinUSB **by itself** on a clean machine — no Zadig, no installer, no admin
+WinUSB **by itself** on a clean machine — no driver install, no admin
 rights, no download, no user action of any kind.
 
 This is a firmware change, made once, and it covers every camera and every
@@ -254,7 +253,7 @@ interface 1 alt 1: class=0xff  ep 0x81 IN bulk, 0x02 OUT bulk   (video)
      ```
      Expect `P2 MAX -> WinUSB`.
 3. **The viewer**: open the page in Chrome and click **Connect camera**; the
-   picker should list the camera with no prior Zadig step.
+   picker should list the camera with no prior driver install.
 
 ## Notes
 
