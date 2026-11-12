@@ -74,11 +74,21 @@ function Show-State {
 }
 
 function Invoke-Cmd {
-  param([string]$Exe, [string[]]$Args, [string]$Tag)
-  Log "[$Tag] $(Split-Path -Leaf $Exe) $($Args -join ' ')"
-  $out  = & $Exe @Args 2>&1 | Out-String
+  # 参数必须叫 $ArgList，绝不能叫 $Args：$args 是 PowerShell 的自动变量，
+  # 声明成参数名后 PowerShell 会静默地不绑定，$Args.Count 恒为 0，
+  # 结果就是 `& $Exe @Args` 变成空参数调用（pnputil 只会打印帮助）。
+  param([string]$Exe, [string[]]$ArgList, [string]$Tag)
+  if (-not $ArgList -or $ArgList.Count -eq 0) {
+    Log "[$Tag] 参数为空，已中止（脚本 bug，不是环境问题）" 'ERR'
+    return 99
+  }
+  Log "[$Tag] $(Split-Path -Leaf $Exe) $($ArgList -join ' ')"
+  $out  = & $Exe @ArgList 2>&1 | Out-String
   $code = $LASTEXITCODE
   foreach ($l in ($out -split "`r?`n")) { if ($l.Trim()) { Log "    $($l.Trim())" 'TOOL' } }
+  if ($out -match 'PNPUTIL \[') {
+    Log "[$Tag] 看起来参数没有传进去（pnputil 打印了帮助）" 'ERR'
+  }
   Log "[$Tag] 退出码: $code"
   return $code
 }
@@ -145,7 +155,8 @@ try {
 
   # 2) 阶段 A：直接装（缺 cat 会明确报「不包含数字签名信息」）
   Log '--- 阶段 A：pnputil 直接安装 ---'
-  Invoke-Cmd 'pnputil.exe' @('/add-driver', $stageInf, '/install') 'A' | Out-Null
+  $rcA = Invoke-Cmd 'pnputil.exe' @('/add-driver', $stageInf, '/install') 'A'
+  if ($rcA -eq 99) { Log '命令没有真正执行，中止。' 'ERR'; exit 1 }
   Start-Sleep -Seconds 2
   $state = Get-State
   Show-State $state
@@ -157,7 +168,10 @@ try {
     if (Test-Path $Dpscat) {
       if (Test-Path $cat) { Remove-Item -LiteralPath $cat -Force }
       Push-Location $Stage
-      try { Invoke-Cmd $Dpscat @('/PATH', $Stage) 'CAT' | Out-Null } catch { Log "dpscat: $($_.Exception.Message)" 'WARN' }
+      try {
+        $rcCat = Invoke-Cmd $Dpscat @('/PATH', $Stage) 'CAT'
+        if ($rcCat -eq 99) { Pop-Location; Log 'dpscat 未带参数执行，中止。' 'ERR'; exit 1 }
+      } catch { Log "dpscat: $($_.Exception.Message)" 'WARN' }
       Pop-Location
     } else {
       Log "缺少 dpscat.exe，无法生成 catalog。" 'ERR'
