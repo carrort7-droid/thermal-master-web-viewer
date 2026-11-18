@@ -4,6 +4,7 @@ import { Camera } from "./usb.js";
 import { session } from "./session.js";
 import { els, state, deliverFrame } from "./viewer.js";
 import { startCapture, stopCapture } from "./log.js";
+import { stopRecording } from "./record.js";
 import { keepAwake, wakeStatus } from "./wakelock.js";
 import "./ui.js";
 import "./panels.js";
@@ -72,6 +73,7 @@ async function run(cam) {
       if (!cam.streaming) break;
       if (err.name === "NotFoundError" || err.name === "NetworkError") {
         setStatus("camera disconnected", "err");
+        stopRecording();   // Auto-stop #2: device disconnect
         connectBtn.hidden = false;
         stopCapture();
         stopMeta();

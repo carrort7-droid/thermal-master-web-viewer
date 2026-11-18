@@ -3,6 +3,8 @@
 import { PALETTES } from "./palettes.js";
 import { download, stamp } from "./download.js";
 import { session } from "./session.js";
+import { isRecording, startRecording, stopRecording, attachButton } from "./record.js";
+import { toggleDemo, demoRunning } from "./demo.js";
 import {
   els, state, view, overlay,
   redraw, recompute, drawOverlay,
@@ -45,6 +47,8 @@ freezeBtn.onclick = () => {
   state.frozen = !state.frozen;
   freezeBtn.classList.toggle("on", state.frozen);
   freezeBtn.textContent = state.frozen ? "Frozen" : "Freeze";
+  // Auto-stop #1: freezing stops any active recording.
+  if (state.frozen) stopRecording();
 };
 
 function toggle(id, key) {
@@ -138,6 +142,23 @@ gainBtn.onclick = () => {
   gainBtn.classList.toggle("on", high);
   gainBtn.textContent = high ? "High gain" : "Low gain";
   session.cam?.setGain(high).catch(() => {});
+};
+
+// ---- local recording / demo ------------------------------------------------
+attachButton("record");
+els("record").onclick = () => {
+  if (isRecording()) { stopRecording(); return; }
+  startRecording().catch(err => {
+    const s = els("status");
+    s.textContent = `Record failed: ${err && err.message ? err.message : err}`;
+    s.className = "err";
+  });
+};
+const demoBtn = els("demo");
+demoBtn.onclick = () => {
+  const on = toggleDemo();
+  demoBtn.classList.toggle("on", on);
+  demoBtn.textContent = on ? "Demo On" : "Demo";
 };
 
 // ---- exports --------------------------------------------------------------

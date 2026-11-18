@@ -8,6 +8,9 @@ import { LUTS } from "./palettes.js";
 
 export const els = id => document.getElementById(id);
 
+let afterRedraw = null;
+export function setAfterRedraw(fn) { afterRedraw = fn; }
+
 export const view = els("view");
 export const overlay = els("overlay");
 const vctx = view.getContext("2d", { alpha: false });
@@ -248,6 +251,7 @@ export function redraw() {
   drawScale(lo, hi);
   drawOverlay();
   updateReadout();
+  if (afterRedraw) afterRedraw();
 }
 
 function drawScale(lo, hi) {
